@@ -1,0 +1,49 @@
+project:
+  name: "ames-housing"
+  version: "0.1.0"
+  description: "Ames Housing Price Prediction"
+
+paths:
+  data_raw: "data/raw/AmesHousing.csv"
+  data_interim: "data/interim"
+  data_processed: "data/processed"
+  models: "models"
+  logs: "logs"
+  mlruns: "mlruns"
+
+data:
+  target_column: "SalePrice"
+  test_size: 0.15
+  val_size: 0.15
+  random_state: 42
+  missing_threshold: 0.30   # drop columns with >30% missing
+
+features:
+  numerical_impute_strategy: "median"
+  categorical_impute_strategy: "most_frequent"
+  skewness_threshold: 0.75
+  log_transform_target: true
+
+training:
+  experiment_name: "ames-housing-experiment"
+  run_name: "gradient-boosting-optuna"
+  n_trials: 50
+  cv_folds: 5
+  scoring: "neg_root_mean_squared_error"
+  random_state: 42
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+  log_level: "info"
+  model_path: "models/best_model.pkl"
+  scaler_path: "models/scaler.pkl"
+  feature_names_path: "models/feature_names.json"
+
+logging:
+  level: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}"
+  file: "logs/ames_housing.log"
+  rotation: "10 MB"
+  retention: "7 days"

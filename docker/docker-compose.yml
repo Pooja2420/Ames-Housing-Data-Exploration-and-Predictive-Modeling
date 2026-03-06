@@ -1,0 +1,65 @@
+services:
+
+  # ── Prediction API ───────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ..           # repo root (so COPY src/ works)
+      dockerfile: docker/Dockerfile
+    image: ames-housing-api:latest
+    container_name: ames-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount local data and model artefacts into the container
+      - ../data:/app/data
+      - ../models:/app/models
+      - ../logs:/app/logs
+    environment:
+      # Override any config value via AMES_ env vars (Pydantic settings)
+      - AMES_API__HOST=0.0.0.0
+      - AMES_API__PORT=8000
+      - AMES_API__WORKERS=1
+      - AMES_LOGGING__LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    networks:
+      - ames-net
+
+  # ── MLflow experiment tracking server ────────────────────────────────────────
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.1
+    container_name: ames-mlflow
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../mlruns:/mlflow/mlruns
+      - ../mlartifacts:/mlflow/mlartifacts
+    command: >
+      mlflow server
+        --host 0.0.0.0
+        --port 5000
+        --backend-store-uri /mlflow/mlruns
+        --default-artifact-root /mlflow/mlartifacts
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - ames-net
+
+networks:
+  ames-net:
+    driver: bridge

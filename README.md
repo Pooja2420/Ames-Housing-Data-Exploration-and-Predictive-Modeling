@@ -657,12 +657,12 @@ ames-housing/
 |-------|--------|--------|
 | 1 | `chore: project scaffold` | ✅ Done |
 | 2 | `feat: config & logging` | ✅ Done |
-| 3 | `feat: data pipeline` | 🔄 Next |
-| 4 | `feat: feature engineering` | ⏳ Pending |
-| 5 | `feat: model training — MLflow + Optuna` | ⏳ Pending |
-| 6 | `feat: FastAPI serving` | ⏳ Pending |
-| 7 | `test: pytest suite` | ⏳ Pending |
-| 8 | `ci: GitHub Actions + Docker` | ⏳ Pending |
+| 3 | `feat: data pipeline` | ✅ Done |
+| 4 | `feat: feature engineering` | ✅ Done |
+| 5 | `feat: model training — MLflow + Optuna` | ✅ Done |
+| 6 | `feat: FastAPI serving` | ✅ Done |
+| 7 | `test: pytest suite` | ✅ Done |
+| 8 | `ci: GitHub Actions + Docker` | ✅ Done |
 
 ---
 

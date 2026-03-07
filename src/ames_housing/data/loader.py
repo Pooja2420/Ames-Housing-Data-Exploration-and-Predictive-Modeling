@@ -21,6 +21,50 @@ from ames_housing.data.schema import RAW_SCHEMA
 from ames_housing.utils.helpers import memory_usage_mb, reduce_memory
 
 
+# ── Column name mapping ────────────────────────────────────────────────────────
+# The OpenML version uses underscores and slightly different names vs the
+# original Kaggle/DePaul CSV that uses spaces. This map normalises both
+# formats to the canonical spaced format used throughout the codebase.
+_OPENML_RENAME: dict[str, str] = {
+    # Special cases that can't be handled by simple underscore→space replace
+    "Sale Price":        "SalePrice",
+    "Year Sold":         "Yr Sold",
+    "First Flr SF":      "1st Flr SF",
+    "Second Flr SF":     "2nd Flr SF",
+    "Three season porch":"3Ssn Porch",
+    "Year Remod Add":    "Year Remod/Add",
+    "MS SubClass":       "MS SubClass",   # already correct after replace
+    "Bedroom AbvGr":     "Bedroom AbvGr", # already correct
+    "TotRms AbvGrd":     "TotRms AbvGrd", # already correct
+}
+
+# Extra columns present in OpenML version not needed for modelling
+_DROP_OPENML_EXTRAS = {"Longitude", "Latitude"}
+
+
+def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalise column names to the canonical Ames Housing (Kaggle) format.
+
+    Handles both:
+    - Original Kaggle format  : spaces  (``Gr Liv Area``, ``SalePrice``)
+    - OpenML / underscore format: underscores (``Gr_Liv_Area``, ``Sale_Price``)
+    """
+    # Detect OpenML format by checking for underscores in column names
+    if any("_" in col for col in df.columns):
+        logger.info("OpenML column format detected — normalising column names.")
+        # Step 1: replace underscores with spaces
+        df.columns = df.columns.str.replace("_", " ", regex=False)
+        # Step 2: apply specific overrides
+        df = df.rename(columns=_OPENML_RENAME)
+        # Step 3: drop extra OpenML-only columns
+        extras = _DROP_OPENML_EXTRAS & set(df.columns)
+        if extras:
+            df = df.drop(columns=list(extras))
+            logger.debug("Dropped OpenML-only columns: {}", extras)
+        logger.info("Column normalisation complete.")
+    return df
+
+
 def load_raw(path: str | Path | None = None) -> pd.DataFrame:
     """Load the raw Ames Housing CSV and validate its schema.
 
@@ -57,6 +101,9 @@ def load_raw(path: str | Path | None = None) -> pd.DataFrame:
         df.shape[1],
         memory_usage_mb(df),
     )
+
+    # ── Column normalisation (handles OpenML underscore format) ────────────────
+    df = _normalize_columns(df)
 
     # ── Schema validation ──────────────────────────────────────────────────────
     logger.info("Validating raw data schema ...")

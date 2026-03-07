@@ -34,14 +34,14 @@ RAW_SCHEMA = DataFrameSchema(
             coerce=True,
         ),
         "Overall Qual": Column(
-            int,
-            checks=pa.Check.isin(list(range(1, 11))),
+            float,                          # float allows coerce from object/str
+            checks=pa.Check.in_range(1, 10),
             nullable=False,
             coerce=True,
         ),
         "Overall Cond": Column(
-            int,
-            checks=pa.Check.isin(list(range(1, 11))),
+            float,
+            checks=pa.Check.in_range(1, 10),
             nullable=False,
             coerce=True,
         ),
@@ -91,17 +91,17 @@ RAW_SCHEMA = DataFrameSchema(
             coerce=True,
         ),
         # ── Key categoricals ──────────────────────────────────────────────────
+        # Note: no isin checks here — the OpenML source uses full English names
+        # (e.g. "Residential_Low_Density") while Kaggle uses short codes (e.g.
+        # "RL").  We accept any non-empty string; downstream preprocessing
+        # handles normalisation and rare-label encoding.
         "MS Zoning": Column(
             str,
-            checks=pa.Check.isin(["A", "C (all)", "FV", "I (all)", "RH", "RL", "RP", "RM"]),
             nullable=True,
             coerce=True,
         ),
         "Sale Condition": Column(
             str,
-            checks=pa.Check.isin(
-                ["Normal", "Abnorml", "AdjLand", "Alloca", "Family", "Partial"]
-            ),
             nullable=True,
             coerce=True,
         ),

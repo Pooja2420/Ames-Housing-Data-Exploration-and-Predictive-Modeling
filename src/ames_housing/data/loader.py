@@ -41,6 +41,25 @@ _OPENML_RENAME: dict[str, str] = {
 # Extra columns present in OpenML version not needed for modelling
 _DROP_OPENML_EXTRAS = {"Longitude", "Latitude"}
 
+# ── Ordinal quality/condition label mapping ────────────────────────────────────
+# OpenML stores Overall Qual & Overall Cond as English strings rather than the
+# 1-10 integers used in the Kaggle/DePaul version.  Values may still have
+# underscores at point of mapping (cell values are not touched by the column-
+# name normalisation step, so we handle both underscore and space variants).
+_QUAL_ORDINAL_MAP: dict[str, int] = {
+    "Very_Poor":      1,  "Very Poor":      1,
+    "Poor":           2,
+    "Fair":           3,
+    "Below_Average":  4,  "Below Average":  4,
+    "Average":        5,
+    "Above_Average":  6,  "Above Average":  6,
+    "Good":           7,
+    "Very_Good":      8,  "Very Good":      8,
+    "Excellent":      9,
+    "Very_Excellent": 10, "Very Excellent": 10,
+}
+_ORDINAL_COLS = {"Overall Qual", "Overall Cond"}
+
 
 def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Normalise column names to the canonical Ames Housing (Kaggle) format.
@@ -61,6 +80,20 @@ def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
         if extras:
             df = df.drop(columns=list(extras))
             logger.debug("Dropped OpenML-only columns: {}", extras)
+
+        # Step 4: map text quality/condition labels → integers (OpenML only)
+        for col in _ORDINAL_COLS & set(df.columns):
+            if df[col].dtype == object:
+                df[col] = df[col].map(_QUAL_ORDINAL_MAP)
+                unmapped = df[col].isna().sum()
+                if unmapped:
+                    logger.warning(
+                        "Column '{}': {} values could not be mapped to ordinal int",
+                        col, unmapped,
+                    )
+                else:
+                    logger.debug("Column '{}': text labels mapped to 1-10 integers.", col)
+
         logger.info("Column normalisation complete.")
     return df
 

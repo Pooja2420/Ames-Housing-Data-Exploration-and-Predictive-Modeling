@@ -67,6 +67,10 @@ def build_pipeline(scale: bool = True) -> Pipeline:
 
         # Step 3 – collapse rare categories before encoding
         ("rare_label", RareLabelEncoder(threshold=0.01)),
+
+        # Step 4 – log1p skewed numeric columns (must run here, while X is still a
+        #           DataFrame; ColumnTransformer converts to ndarray internally)
+        ("skew_correct", SkewnessCorrector(threshold=cfg.skewness_threshold)),
     ]
 
     if scale:
@@ -83,9 +87,10 @@ def _build_column_transformer(cfg, scale: bool = True) -> ColumnTransformer:
     """Inner ColumnTransformer: impute + encode + optionally scale."""
 
     # ── Numeric sub-pipeline ───────────────────────────────────────────────────
+    # Note: SkewnessCorrector is applied in the outer pipeline (before this
+    # ColumnTransformer) where X is still a DataFrame with named columns.
     num_steps = [
         ("impute_num", SimpleImputer(strategy=cfg.numerical_impute_strategy)),
-        ("skew", SkewnessCorrector(threshold=cfg.skewness_threshold)),
     ]
     if scale:
         num_steps.append(("scale", StandardScaler()))

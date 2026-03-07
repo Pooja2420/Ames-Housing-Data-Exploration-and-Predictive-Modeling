@@ -170,13 +170,18 @@ class SkewnessCorrector(BaseEstimator, TransformerMixin):
 
     def __init__(self, threshold: float = 0.75, exclude: list[str] | None = None) -> None:
         self.threshold = threshold
-        self.exclude = exclude or []
+        # Store exactly what was passed — do NOT resolve None here.
+        # sklearn's clone() uses an `is` identity check between get_params()
+        # and the re-constructed object's get_params(); transforming the default
+        # (None → []) causes a clone failure inside cross_val_score.
+        self.exclude = exclude
         self.skewed_cols_: list[str] = []
 
     def fit(self, X: pd.DataFrame, y=None) -> "SkewnessCorrector":
+        _exclude = self.exclude or []   # resolve None safely here, not in __init__
         num_cols = (
             X.select_dtypes(include=[np.number])
-            .columns.difference(self.exclude)
+            .columns.difference(_exclude)
         )
         skewness = X[num_cols].skew().abs()
         self.skewed_cols_ = skewness[skewness > self.threshold].index.tolist()

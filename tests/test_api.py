@@ -39,8 +39,8 @@ class TestHealthEndpoint:
         """When no pipeline is loaded, model_loaded should be False."""
         from ames_housing.api.main import create_app
         app = create_app()
-        app.state.pipeline = None
         with TestClient(app, raise_server_exceptions=True) as client:
+            client.app.state.pipeline = None  # override AFTER lifespan
             body = client.get("/health").json()
         assert body["model_loaded"] is False
 

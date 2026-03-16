@@ -144,8 +144,8 @@ class TestPreprocessor:
         """Numeric imputation should use the column median."""
         from ames_housing.data.preprocessor import _impute
         df = small_df.copy()
-        median_val = df["Gr Liv Area"].median()
         df.loc[0, "Gr Liv Area"] = np.nan
+        median_val = df["Gr Liv Area"].median()  # median of non-NaN values
         result = _impute(df)
         assert result.loc[0, "Gr Liv Area"] == pytest.approx(median_val)
 

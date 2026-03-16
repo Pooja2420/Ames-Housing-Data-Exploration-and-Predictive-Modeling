@@ -92,10 +92,20 @@ def make_synthetic_df(n: int = N_ROWS, seed: int = 42) -> pd.DataFrame:
     data: dict = {}
 
     for col, fn in _NUM_COLS.items():
-        data[col] = fn(n)
+        if col != "SalePrice":
+            data[col] = fn(n)
 
     for col, choices in _CAT_COLS.items():
         data[col] = rng.choice(choices, n)
+
+    # Generate SalePrice correlated with actual column values so the
+    # fitted model learns real relationships (e.g. larger area → higher price)
+    data["SalePrice"] = (
+        80000
+        + data["Overall Qual"] * 18000
+        + data["Gr Liv Area"] * 55
+        + rng.normal(0, 15000, n)
+    ).clip(50000, 700000).astype(float)
 
     return pd.DataFrame(data)
 

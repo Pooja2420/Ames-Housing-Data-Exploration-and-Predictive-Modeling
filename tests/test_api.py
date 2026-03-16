@@ -139,8 +139,8 @@ class TestPredictEndpoint:
         """If no model is loaded, /predict should return 503."""
         from ames_housing.api.main import create_app
         app = create_app()
-        app.state.pipeline = None
         with TestClient(app, raise_server_exceptions=False) as client:
+            client.app.state.pipeline = None  # override AFTER lifespan
             response = client.post("/predict", json=valid_prediction_payload)
         assert response.status_code == 503
 

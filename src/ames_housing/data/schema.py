@@ -115,10 +115,11 @@ RAW_SCHEMA = DataFrameSchema(
 # ── Processed dataset schema (post-preprocessing) ─────────────────────────────
 PROCESSED_SCHEMA = DataFrameSchema(
     columns={
-        "SalePrice": Column(float, checks=pa.Check.greater_than(0), nullable=False),
-        "Overall Qual": Column(float, nullable=False),
-        "Gr Liv Area": Column(float, nullable=False),
+        "SalePrice": Column(float, checks=pa.Check.greater_than(0), nullable=False, coerce=True),
+        "Overall Qual": Column(float, nullable=False, coerce=True),
+        "Gr Liv Area": Column(float, nullable=False, coerce=True),
     },
     strict=False,
+    coerce=True,
     name="AmesHousingProcessed",
 )

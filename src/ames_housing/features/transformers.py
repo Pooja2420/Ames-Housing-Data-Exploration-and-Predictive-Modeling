@@ -96,7 +96,7 @@ class AmesFeatureEngineer(BaseEstimator, TransformerMixin):
         df["HouseAge"]   = (_col("Yr Sold") - _col("Year Built")).clip(lower=0)
         df["RemodelAge"] = (_col("Yr Sold") - _col("Year Remod/Add")).clip(lower=0)
         df["IsRemodeled"] = (
-            (_col("Year Built") != _col("Year Remod/Add")).astype(np.float32)
+            (_col("Year Built") != _col("Year Remod/Add")).astype(float)
         )
 
         # ── Quality / condition interaction ────────────────────────────────────
@@ -104,10 +104,10 @@ class AmesFeatureEngineer(BaseEstimator, TransformerMixin):
         df["GarageScore"] = _col("Garage Cars") * _col("Garage Area")
 
         # ── Binary indicators ──────────────────────────────────────────────────
-        df["HasPool"]      = (_col("Pool Area")      > 0).astype(np.float32)
-        df["HasFireplace"] = (_col("Fireplaces")     > 0).astype(np.float32)
-        df["HasGarage"]    = (_col("Garage Area")    > 0).astype(np.float32)
-        df["HasBasement"]  = (_col("Total Bsmt SF")  > 0).astype(np.float32)
+        df["HasPool"]      = (_col("Pool Area")      > 0).astype(float)
+        df["HasFireplace"] = (_col("Fireplaces")     > 0).astype(float)
+        df["HasGarage"]    = (_col("Garage Area")    > 0).astype(float)
+        df["HasBasement"]  = (_col("Total Bsmt SF")  > 0).astype(float)
 
         # ── Efficiency ratio ───────────────────────────────────────────────────
         liv = _col("Gr Liv Area").replace(0, np.nan)

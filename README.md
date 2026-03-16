@@ -1,24 +1,25 @@
 # Ames Housing Price Predictor
 
-> A production-grade machine learning system that predicts residential home sale prices
-> using the Ames Housing Dataset — built with modern AI/ML engineering practices.
+A production-grade machine learning system that predicts residential home sale prices using the
+Ames Housing Dataset. The project covers the full ML lifecycle — from raw data exploration and
+preprocessing through model training, hyperparameter tuning, and deployment as a REST API.
 
-**Dataset Source:** [Kaggle — Ames Housing Dataset](https://www.kaggle.com/datasets/prevek18/ames-housing-dataset/data)
-**Best Model R² Score:** 0.940 (Gradient Boosting + Optuna HPO)
-**Prediction Error (MAE):** ~$13,530 on unseen data
+**Dataset:** 2,930 properties · 82 features · Ames, Iowa · 2006–2010
+**Best Model:** Gradient Boosting + Optuna HPO · R² = 0.940 · MAE ≈ $13,530
+**Data Source:** [Kaggle — Ames Housing Dataset](https://www.kaggle.com/datasets/prevek18/ames-housing-dataset/data)
 
 ---
 
 ## Table of Contents
 
-1. [Project Overview](#1-project-overview)
-2. [Dataset at a Glance](#2-dataset-at-a-glance)
-3. [Exploratory Data Analysis (EDA)](#3-exploratory-data-analysis-eda)
+1. [Introduction](#1-introduction)
+2. [Dataset](#2-dataset)
+3. [Exploratory Data Analysis](#3-exploratory-data-analysis)
 4. [Data Preprocessing](#4-data-preprocessing)
 5. [Feature Engineering](#5-feature-engineering)
-6. [Model Training & Results](#6-model-training--results)
-7. [Best Model Deep Dive](#7-best-model-deep-dive)
-8. [Production System Architecture](#8-production-system-architecture)
+6. [Methods & Algorithms](#6-methods--algorithms)
+7. [Results & Outcomes](#7-results--outcomes)
+8. [System Architecture](#8-system-architecture)
 9. [Quickstart](#9-quickstart)
 10. [API Reference](#10-api-reference)
 11. [Tech Stack](#11-tech-stack)
@@ -26,86 +27,68 @@
 
 ---
 
-## 1. Project Overview
+## 1. Introduction
 
-This project started as a Jupyter notebook exploration of the Ames Housing Dataset and has been
-evolved into a full production ML system. The goal is to predict the **final sale price** of a
-residential property in Ames, Iowa based on 80+ features describing the home's physical
-characteristics, condition, location, and sale details.
+Predicting a home's sale price is a classic regression problem with real-world impact — it drives
+decisions for buyers, sellers, and appraisers. The Ames Housing Dataset provides a rich set of
+features describing virtually every aspect of residential properties, making it ideal for building
+and evaluating machine learning models.
 
-### What this system does
+This project goes beyond a standard notebook. It is structured as a deployable ML engineering
+system with the following goals:
 
-```
-Raw CSV  →  Validate  →  Preprocess  →  Engineer Features  →  Train Models
-                                                                    ↓
-REST API  ←  Model Registry  ←  MLflow Experiment Tracking  ←  Optuna HPO
-```
-
-### Key outcomes
-
-- Trained and compared **5 algorithms**: Linear Regression, Decision Tree,
-  Gradient Boosting, AdaBoost, and SVM
-- Best model achieves **R² = 0.940** with **MAE = $13,530**
-- Full production API that accepts a property description and returns a price prediction
-- Experiment tracking via MLflow so every run is reproducible
-- Automated hyperparameter tuning with Optuna (replaced manual GridSearch)
+- Build a robust preprocessing and feature engineering pipeline
+- Train and compare multiple regression algorithms with proper evaluation
+- Tune the best model using Bayesian hyperparameter optimisation (Optuna)
+- Track every experiment with MLflow for reproducibility
+- Expose predictions through a production-ready FastAPI REST API
+- Validate data contracts with Pandera schema checks
+- Containerise with Docker and automate CI/CD with GitHub Actions
 
 ---
 
-## 2. Dataset at a Glance
-
-### Overview
+## 2. Dataset
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  Dataset: Ames Housing (AmesHousing.csv)                │
-│  Rows   : 2,930 properties                              │
-│  Columns: 82 features  (36 numerical, 46 categorical)   │
-│  Target : SalePrice (continuous, USD)                   │
-│  Years  : 2006 – 2010  |  City: Ames, Iowa              │
-└─────────────────────────────────────────────────────────┘
+Dataset : Ames Housing (AmesHousing.csv)
+Rows    : 2,930 residential properties
+Columns : 82 features  (36 numerical, 46 categorical)
+Target  : SalePrice  (continuous, USD)
+Period  : 2006 – 2010
+Location: Ames, Iowa, USA
 ```
 
 ### Sale Price Summary Statistics
 
-```
-Statistic        Value
-───────────────────────────
-Count            2,930
-Mean            $180,796
-Median          $160,000
-Std Dev          $79,887
-Min              $12,789
-25th Pct        $129,500
-75th Pct        $213,500
-Max             $755,000
-```
+| Statistic | Value |
+|---|---|
+| Mean | $180,796 |
+| Median | $160,000 |
+| Std Dev | $79,887 |
+| Min | $12,789 |
+| Max | $755,000 |
 
 ### Feature Categories
 
-```
-LOCATION           STRUCTURE           QUALITY             EXTRAS
-─────────────      ─────────────────   ─────────────────   ──────────────
-Neighborhood       YearBuilt           OverallQual         PoolArea
-MSZoning           GrLivArea           OverallCond         Fireplaces
-Condition1         TotalBsmtSF         ExterQual           WoodDeckSF
-LotArea            GarageCars          KitchenQual         OpenPorchSF
-LotFrontage        1stFlrSF            BsmtQual            ScreenPorch
-LandSlope          2ndFlrSF            HeatingQC           Fence
-```
+| Location | Structure | Quality | Extras |
+|---|---|---|---|
+| Neighborhood | Year Built | Overall Qual | Pool Area |
+| MS Zoning | Gr Liv Area | Overall Cond | Fireplaces |
+| Lot Area | Total Bsmt SF | Exter Qual | Wood Deck SF |
+| Lot Frontage | Garage Cars | Kitchen Qual | Open Porch SF |
+| Condition | 1st / 2nd Flr SF | Bsmt Qual | Screen Porch |
 
 ---
 
-## 3. Exploratory Data Analysis (EDA)
+## 3. Exploratory Data Analysis
 
-### 3.1 Sale Price Distribution
+### Sale Price Distribution
 
-The target variable `SalePrice` is **right-skewed**. The bulk of homes sold between
-$100,000 and $250,000, with a long tail of luxury properties above $400,000.
+The target variable `SalePrice` is right-skewed. Most homes sold between $100k–$250k, with a
+long tail of luxury properties. A **log transformation** (`log(1 + x)`) is applied before
+modelling to normalise the distribution and reduce the influence of outliers.
 
 ```
-SalePrice Distribution (approximate frequency)
-─────────────────────────────────────────────────────
   $0–$50k   |▌                              (  0.5%)
  $50–$100k  |████▌                          (  8.2%)
 $100–$150k  |████████████████▌              ( 27.4%)
@@ -114,355 +97,371 @@ $200–$250k  |████████████▌                  ( 18.9%)
 $250–$300k  |██████▌                        (  8.3%)
 $300–$400k  |████▌                          (  4.1%)
   $400k+    |▌                              (  1.0%)
-─────────────────────────────────────────────────────
-  Peak: $100k–$200k  |  Right skew confirmed
-  → Log-transform applied before modelling
 ```
 
-### 3.2 Top Correlations with Sale Price
+### Top Feature Correlations with Sale Price
 
-These features have the strongest linear relationship with `SalePrice`:
+| Feature | Correlation | Direction |
+|---|---|---|
+| Overall Qual | +0.801 | Strong positive |
+| Gr Liv Area | +0.709 | Strong positive |
+| Garage Cars | +0.648 | Strong positive |
+| Garage Area | +0.641 | Strong positive |
+| Total Bsmt SF | +0.612 | Strong positive |
+| 1st Flr SF | +0.596 | Strong positive |
+| Full Bath | +0.561 | Strong positive |
+| Year Built | +0.523 | Moderate positive |
 
-```
-Feature                Correlation    Direction
-──────────────────────────────────────────────────
-Overall Qual           +0.801         ↑ Strong positive
-Gr Liv Area            +0.709         ↑ Strong positive
-Garage Cars            +0.648         ↑ Strong positive
-Garage Area            +0.641         ↑ Strong positive
-Total Bsmt SF          +0.612         ↑ Strong positive
-1st Flr SF             +0.596         ↑ Strong positive
-Full Bath              +0.561         ↑ Strong positive
-TotRms AbvGrd          +0.534         ↑ Moderate positive
-Year Built             +0.523         ↑ Moderate positive
-Year Remod/Add         +0.507         ↑ Moderate positive
-──────────────────────────────────────────────────
-```
+> **Key insight:** Overall Quality is the single strongest predictor. A 1-point increase in
+> quality rating is associated with a $20,000+ increase in sale price.
 
-> **Key insight:** Overall quality rating is the single strongest predictor —
-> a 1-point increase in quality is associated with ~$20,000+ higher sale price.
+### Missing Data
 
-### 3.3 Correlation Heatmap (Top 10 Features)
+| Column | % Missing | Action |
+|---|---|---|
+| Pool QC | 99.3% | Dropped |
+| Misc Feature | 96.0% | Dropped |
+| Alley | 93.2% | Dropped |
+| Fence | 80.4% | Dropped |
+| Fireplace Qu | 48.5% | Dropped |
+| Lot Frontage | 16.7% | Imputed (median) |
+| Garage Type | 2.8% | Imputed (mode) |
+| Bsmt Qual | 1.9% | Imputed (mode) |
 
-```
-                OverQ  GrLiv  GarCr  GarAr  TBsmt  1stFl  FulBt  TotRm  YrBlt  YrRem
-Overall Qual  │  1.00   0.59   0.60   0.55   0.53   0.48   0.55   0.51   0.57   0.55
-Gr Liv Area   │  0.59   1.00   0.47   0.47   0.37   0.57   0.63   0.81   0.20   0.21
-Garage Cars   │  0.60   0.47   1.00   0.88   0.43   0.44   0.47   0.36   0.54   0.49
-Garage Area   │  0.55   0.47   0.88   1.00   0.49   0.49   0.41   0.34   0.48   0.44
-Total Bsmt SF │  0.53   0.37   0.43   0.49   1.00   0.82   0.30   0.39   0.39   0.38
-1st Flr SF    │  0.48   0.57   0.44   0.49   0.82   1.00   0.27   0.42   0.29   0.29
-Full Bath     │  0.55   0.63   0.47   0.41   0.30   0.27   1.00   0.55   0.47   0.43
-TotRms AbvGrd │  0.51   0.81   0.36   0.34   0.39   0.42   0.55   1.00   0.24   0.23
-Year Built    │  0.57   0.20   0.54   0.48   0.39   0.29   0.47   0.24   1.00   0.59
-Year Remod    │  0.55   0.21   0.49   0.44   0.38   0.29   0.43   0.23   0.59   1.00
-
-Scale: 0.0─────0.3─────0.5─────0.7─────1.0
-       (weak)  (mod)  (strong) (very)  (perfect)
-```
-
-### 3.4 Living Area vs Sale Price
-
-```
-Sale Price ($)
-   700k ┤                                              ●
-   600k ┤                                         ●
-   500k ┤                                    ●  ●
-   400k ┤                               ● ●●●
-   300k ┤                          ●●●●●●●●●●
-   200k ┤              ●●●●●●●●●●●●●●●●●●●●
-   150k ┤        ●●●●●●●●●●●●●●●●●●●
-   100k ┤   ●●●●●●●●●●●●●●●
-    50k ┤ ●●●
-        └─────────────────────────────────────────
-        500   1000  1500  2000  2500  3000  3500  4000+
-                     Above Grade Living Area (sqft)
-
- → Clear positive trend. Outliers visible at very large areas.
- → Most homes fall between 1,000–3,000 sqft.
-```
-
-### 3.5 Price by Neighborhood (Top & Bottom 5)
-
-```
-Highest Median Sale Price          Lowest Median Sale Price
-──────────────────────────         ──────────────────────────
-NridgHt  $315,000  ██████████       MeadowV  $ 88,000  ██
-StoneBr  $310,000  ██████████       IDOTRR   $ 95,000  ███
-Timber   $254,000  ████████         BrDale   $104,000  ███
-Veenker  $250,000  ████████         BrkSide  $124,000  ████
-Somerst  $230,000  ███████          OldTown  $127,000  ████
-
-→ Neighborhood alone can shift price by $200k+
-→ NridgHt and StoneBr are premium areas
-```
-
-### 3.6 Missing Data Analysis
-
-```
-Column             Missing    % Missing   Action
-───────────────────────────────────────────────────────
-Pool QC            2,909      99.3%       DROPPED
-Misc Feature       2,814      96.0%       DROPPED
-Alley              2,732      93.2%       DROPPED
-Fence              2,358      80.4%       DROPPED
-Fireplace Qu       1,420      48.5%       DROPPED
-Lot Frontage         490      16.7%       Imputed (median)
-Garage Type           81       2.8%       Imputed (mode)
-Garage Finish         78       2.7%       Imputed (mode)
-Bsmt Qual             55       1.9%       Imputed (mode)
-Mas Vnr Type          23       0.8%       Imputed (mode)
-Electrical             1       0.03%      Imputed (mode)
-───────────────────────────────────────────────────────
-Rule: Drop if > 30% missing | Impute otherwise
-```
-
-### 3.7 Skewness in Numerical Features
-
-Highly skewed features (|skew| > 0.75) received log(1+x) transformation to
-improve model performance:
-
-```
-Most Skewed Features (before transformation)
-───────────────────────────────────────────────
-Misc Val         24.4  ████████████████████████
-Pool Area        17.7  █████████████████
-3Ssn Porch       11.4  ███████████
-Low Qual Fin SF   9.0  █████████
-Lot Area          2.6  ███
-Gr Liv Area       1.4  ██
-SalePrice         1.7  ██  ← TARGET (log-transformed)
-───────────────────────────────────────────────
-```
+**Rule:** Drop columns with > 30% missing values. Impute the rest.
 
 ---
 
 ## 4. Data Preprocessing
 
-### Pipeline Overview
+The preprocessing pipeline runs in 7 sequential steps:
 
 ```
-Raw Data (2930 rows × 82 cols)
-         │
-         ▼
-  [1] Drop High-Missing Columns (> 30% null)
-         │  Removed: Pool QC, Misc Feature, Alley, Fence, Fireplace Qu
-         │
-         ▼
-  [2] Impute Remaining Nulls
-         │  Numerical  → median strategy
-         │  Categorical → most frequent (mode)
-         │
-         ▼
-  [3] Drop ID Column (PID)
-         │
-         ▼
-  [4] Log-Transform Skewed Numericals (|skew| > 0.75)
-         │
-         ▼
-  [5] One-Hot Encode Categoricals
-         │  38 categorical columns → ~200+ binary features
-         │
-         ▼
-  [6] Train / Validation / Test Split
-         │  70% Train | 15% Validation | 15% Test
-         │  Stratified to preserve price distribution
-         │
-         ▼
-  [7] Standard Scaling (for linear models and SVM)
-         │
-         ▼
-  Final: 2051 train | 440 val | 439 test rows
+Raw CSV  (2,930 rows × 82 cols)
+    │
+    ▼
+[1] Drop High-Missing Columns  — removes cols with > 30% nulls
+    │
+    ▼
+[2] Impute Remaining Nulls
+    │   Numerical  → median
+    │   Categorical → mode (most frequent)
+    │
+    ▼
+[3] Remove Sale Price Outliers  — IQR rule: Q1 − 1.5×IQR  to  Q3 + 1.5×IQR
+    │
+    ▼
+[4] Log-Transform Skewed Features  — log(1 + x) where |skew| > 0.75
+    │
+    ▼
+[5] One-Hot Encode Categorical Columns
+    │   38 categorical columns → ~200 binary features
+    │
+    ▼
+[6] Stratified Train / Validation / Test Split
+    │   70% Train | 15% Validation | 15% Test
+    │   Stratified on SalePrice quintiles
+    │
+    ▼
+[7] Standard Scaling  — zero mean, unit variance (for linear models / SVM)
+
+Final: 2,051 train | 440 validation | 439 test rows
 ```
+
+### Schema Validation
+
+All data is validated before and after preprocessing using **Pandera** schema contracts.
+This catches dtype mismatches, out-of-range values, and unexpected nulls early.
 
 ---
 
 ## 5. Feature Engineering
 
-### Engineered Features (Production Pipeline)
+13 domain-driven features are created from the raw columns before encoding.
+All transformers follow the scikit-learn `BaseEstimator` + `TransformerMixin` protocol
+so they plug directly into sklearn Pipelines.
 
-| New Feature | Formula | Rationale |
+| Feature | Formula | Rationale |
 |---|---|---|
-| `TotalSF` | BsmtSF + 1stFlrSF + 2ndFlrSF | Total usable square footage |
-| `TotalBath` | FullBath + 0.5×HalfBath + BsmtFullBath | Combined bathroom score |
-| `HouseAge` | YrSold − YearBuilt | Age at time of sale |
-| `RemodelAge` | YrSold − YearRemodAdd | Years since last remodel |
-| `IsRemodeled` | 1 if YearBuilt ≠ YearRemodAdd | Binary remodel flag |
-| `GarageScore` | GarageCars × GarageArea | Weighted garage value |
-| `QualCond` | OverallQual × OverallCond | Combined quality interaction |
-| `PorchSF` | OpenPorchSF + EnclosedPorch + ScreenPorch | Total porch area |
-| `HasPool` | 1 if PoolArea > 0 | Binary pool indicator |
-| `HasFireplace` | 1 if Fireplaces > 0 | Binary fireplace indicator |
+| `TotalSF` | Total Bsmt SF + 1st Flr SF + 2nd Flr SF | Total usable square footage |
+| `TotalBath` | FullBath + 0.5 × HalfBath + BsmtFullBath + 0.5 × BsmtHalfBath | Weighted bathroom score |
+| `HouseAge` | Yr Sold − Year Built | Age of home at time of sale |
+| `RemodelAge` | Yr Sold − Year Remod/Add | Years since last remodel |
+| `IsRemodeled` | 1 if Year Built ≠ Year Remod/Add, else 0 | Binary remodel flag |
+| `GarageScore` | Garage Cars × Garage Area | Combined garage size and capacity |
+| `QualCond` | Overall Qual × Overall Cond | Quality–condition interaction term |
+| `PorchSF` | Open Porch SF + Enclosed Porch + 3Ssn Porch + Screen Porch | Total porch area |
+| `HasPool` | 1 if Pool Area > 0, else 0 | Binary pool indicator |
+| `HasFireplace` | 1 if Fireplaces > 0, else 0 | Binary fireplace indicator |
+| `HasGarage` | 1 if Garage Area > 0, else 0 | Binary garage indicator |
+| `HasBasement` | 1 if Total Bsmt SF > 0, else 0 | Binary basement indicator |
+| `LotToLivRatio` | Lot Area / Gr Liv Area | Lot efficiency ratio |
+
+### Feature Pipeline Order
+
+```
+Raw DataFrame
+    │
+    ├─ [1] HighMissingDropper   → drop cols with > 30% nulls
+    ├─ [2] AmesFeatureEngineer  → add 13 domain features
+    ├─ [3] RareLabelEncoder     → collapse categories < 1% frequency → 'Other'
+    ├─ [4] SkewnessCorrector    → log1p on |skew| > 0.75 columns
+    └─ [5] ColumnTransformer
+           ├─ Numeric  → SimpleImputer (median) → [StandardScaler]
+           └─ Categoric → SimpleImputer (constant) → OneHotEncoder
+```
 
 ---
 
-## 6. Model Training & Results
+## 6. Methods & Algorithms
 
-### All Models Compared
+### 6.1 Evaluation Metrics
 
-```
-┌─────────────────────────────────────┬──────────┬──────────┬──────────┬──────────┐
-│ Model                               │ Dataset  │   R²     │  RMSE    │  MAE     │
-├─────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
-│ Linear Regression                   │ Train    │  0.926   │ $22,914  │ $15,603  │
-│                                     │ Test     │  0.864   │ $30,902  │ $19,241  │
-│                                     │ Val      │  0.871   │ $29,765  │ $19,002  │
-├─────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
-│ Decision Tree                       │ Train    │  1.000   │     $0   │     $0   │ ← OVERFIT
-│                                     │ Test     │  0.820   │ $35,671  │ $22,115  │
-│                                     │ Val      │  0.815   │ $35,992  │ $22,430  │
-├─────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
-│ Gradient Boosting (default)         │ Train    │  0.963   │ $16,167  │ $10,891  │
-│                                     │ Test     │  0.909   │ $25,315  │ $14,136  │
-│                                     │ Val      │  0.934   │ $21,312  │ $13,977  │
-├─────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
-│ AdaBoost                            │ Train    │  0.837   │ $34,151  │ $22,873  │
-│                                     │ Test     │  0.808   │ $36,742  │ $24,115  │
-│                                     │ Val      │  0.812   │ $36,001  │ $23,998  │
-├─────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
-│ SVM                                 │ Train    │ -0.003   │ $84,912  │ $52,341  │ ← POOR FIT
-│                                     │ Test     │ -0.005   │ $84,103  │ $51,987  │
-│                                     │ Val      │ -0.004   │ $84,450  │ $52,100  │
-├─────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
-│ Gradient Boosting + GridSearchCV    │ Train    │  0.971   │ $14,442  │  $9,713  │
-│                                     │ Test     │  0.911   │ $25,315  │ $14,136  │
-│                                     │ Val      │  0.940   │ $20,215  │ $13,530  │ ← BEST ✓
-├─────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
-│ Gradient Boosting + CV (5-fold)     │ Cross-V  │  0.948   │ $19,273  │ $12,981  │
-└─────────────────────────────────────┴──────────┴──────────┴──────────┴──────────┘
-```
+All models are evaluated using four metrics:
 
-### R² Score Visual Comparison (Test Set)
+**R² (Coefficient of Determination)**
 
-```
-Model                        R² Score (Test)
-──────────────────────────────────────────────
-GB + GridSearch  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░  0.911
-GB Default       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░  0.909
-Linear Reg       ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  0.864
-Decision Tree    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░  0.820
-AdaBoost         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░  0.808
-SVM              ░░░░░░░░░░░░░░░░░░░░  -0.005
+$$R^2 = 1 - \frac{\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}{\sum_{i=1}^{n}(y_i - \bar{y})^2}$$
 
-▓ = explained variance    ░ = unexplained
-──────────────────────────────────────────────
-Best → Gradient Boosting with Hyperparameter Tuning
-```
+Measures the proportion of variance in the target explained by the model. Range: (−∞, 1]. A score of 1.0 is a perfect fit.
 
-### Why SVM Failed
+**RMSE (Root Mean Squared Error)**
 
-SVM with default kernel was not scaled correctly in the first pass.
-Even after scaling, SVM is computationally expensive on high-dimensional
-one-hot encoded data (200+ features) and struggles with the non-linear
-nature of real estate pricing. Not recommended for this problem.
+$$\text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}$$
 
-### Why Decision Tree Overfit
+Penalises large errors more heavily than MAE. Units are in dollars.
 
-A fully grown Decision Tree memorises every training sample (R² = 1.000 on train),
-but fails to generalise (R² = 0.820 on test). This is a classic bias-variance
-tradeoff failure — fixed in production by using ensembles.
+**MAE (Mean Absolute Error)**
+
+$$\text{MAE} = \frac{1}{n}\sum_{i=1}^{n}|y_i - \hat{y}_i|$$
+
+The average absolute prediction error in dollars. More interpretable than RMSE.
+
+**MAPE (Mean Absolute Percentage Error)**
+
+$$\text{MAPE} = \frac{100}{n}\sum_{i=1}^{n}\left|\frac{y_i - \hat{y}_i}{y_i}\right|$$
+
+Error expressed as a percentage of the true value.
+
+> **Note:** Because `SalePrice` is log-transformed during training, all predictions are
+> inverse-transformed with `exp(x) − 1` before computing metrics in dollar space.
 
 ---
 
-## 7. Best Model Deep Dive
+### 6.2 Linear Regression (Baseline)
 
-### Gradient Boosting — Tuned Configuration
+Ordinary Least Squares (OLS) regression fits a hyperplane by minimising the sum of
+squared residuals:
+
+$$\hat{y} = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_p x_p$$
+
+$$\hat{\boldsymbol{\beta}} = (\mathbf{X}^\top \mathbf{X})^{-1} \mathbf{X}^\top \mathbf{y}$$
+
+Requires feature scaling (StandardScaler applied). Used as the baseline to beat.
+
+---
+
+### 6.3 Decision Tree
+
+Recursively splits the feature space by selecting the feature and threshold that minimises
+Mean Squared Error (MSE) at each node:
+
+$$\text{MSE}_{\text{split}} = \frac{1}{n_L}\sum_{i \in L}(y_i - \bar{y}_L)^2 + \frac{1}{n_R}\sum_{i \in R}(y_i - \bar{y}_R)^2$$
+
+The prediction for a leaf node is the mean of all training samples that fall into it.
+A fully grown tree achieves R² = 1.0 on training data (memorisation) but generalises poorly.
+
+---
+
+### 6.4 Gradient Boosting (Best Model)
+
+Gradient Boosting builds an ensemble of decision trees **sequentially**, where each tree
+corrects the residual errors of the previous ones.
+
+**Algorithm:**
+
+1. Initialise the model with a constant prediction:
+
+$$F_0(x) = \arg\min_\gamma \sum_{i=1}^{n} L(y_i, \gamma)$$
+
+2. For each iteration `m = 1, 2, ..., M`:
+
+   a. Compute the pseudo-residuals (negative gradient of the loss):
+
+   $$r_{im} = -\left[\frac{\partial L(y_i, F(x_i))}{\partial F(x_i)}\right]_{F = F_{m-1}}$$
+
+   b. Fit a decision tree `h_m(x)` to the residuals `r_{im}`
+
+   c. Compute the step size via line search:
+
+   $$\gamma_m = \arg\min_\gamma \sum_{i=1}^{n} L(y_i,\ F_{m-1}(x_i) + \gamma \cdot h_m(x_i))$$
+
+   d. Update the model:
+
+   $$F_m(x) = F_{m-1}(x) + \eta \cdot \gamma_m \cdot h_m(x)$$
+
+Where `η` is the **learning rate** (shrinkage), which controls the contribution of each tree.
+
+**Loss function used (squared error):**
+
+$$L(y, \hat{y}) = \frac{1}{2}(y - \hat{y})^2$$
+
+**Tuned hyperparameters (Optuna):**
+
+| Parameter | Value | Effect |
+|---|---|---|
+| `learning_rate` | 0.05 | Shrinks each tree's contribution |
+| `n_estimators` | 200 | Number of trees in the ensemble |
+| `max_depth` | 5 | Maximum depth per tree |
+| `min_samples_leaf` | 2 | Minimum samples at leaf nodes |
+| `subsample` | 0.85 | Fraction of samples per tree (stochastic GB) |
+
+---
+
+### 6.5 AdaBoost
+
+Adaptive Boosting fits trees sequentially, increasing the weight of misclassified (high-error)
+samples so subsequent trees focus on harder examples:
+
+$$F_M(x) = \sum_{m=1}^{M} \alpha_m \cdot h_m(x)$$
+
+Where `α_m` is the weight of tree `m`, computed from its weighted error rate. Performance
+was significantly lower than Gradient Boosting on this dataset (R² = 0.808).
+
+---
+
+### 6.6 Support Vector Machine (SVM)
+
+SVM solves the following optimisation problem for regression (SVR):
+
+$$\min_{\mathbf{w}, b, \xi} \frac{1}{2}\|\mathbf{w}\|^2 + C\sum_{i=1}^{n}(\xi_i + \xi_i^*)$$
+
+$$\text{subject to: } y_i - \mathbf{w}^\top \phi(x_i) - b \leq \varepsilon + \xi_i$$
+
+SVM failed on this dataset (R² ≈ −0.005). The reason: with 200+ one-hot encoded features,
+the default RBF kernel cannot find an effective mapping, and SVM does not scale well to
+high-dimensional sparse inputs without significant kernel tuning.
+
+---
+
+### 6.7 Hyperparameter Optimisation — Optuna
+
+Optuna uses **Tree-structured Parzen Estimators (TPE)**, a Bayesian optimisation algorithm,
+to search hyperparameter space efficiently. Rather than exhaustive grid search, TPE builds
+a probabilistic model of which parameter regions yield good scores:
+
+$$x^* = \arg\min_{x} \frac{l(x)}{g(x)}$$
+
+Where `l(x)` models the distribution of good configurations and `g(x)` models the rest.
+This converges to good hyperparameters in far fewer trials than GridSearchCV.
+
+---
+
+## 7. Results & Outcomes
+
+### Model Comparison (Test Set)
+
+| Model | R² | RMSE | MAE | Notes |
+|---|---|---|---|---|
+| Linear Regression | 0.864 | $30,902 | $19,241 | Baseline |
+| Decision Tree | 0.820 | $35,671 | $22,115 | Overfit (train R²=1.0) |
+| Gradient Boosting (default) | 0.909 | $25,315 | $14,136 | Strong out of the box |
+| AdaBoost | 0.808 | $36,742 | $24,115 | Weaker than GB |
+| SVM | −0.005 | $84,103 | $51,987 | Failed — wrong kernel |
+| **Gradient Boosting + Optuna** | **0.940** | **$20,215** | **$13,530** | **Best model** |
+
+### Final Model Performance
 
 ```
-Best Hyperparameters (from GridSearchCV / Optuna):
-───────────────────────────────────────────────────
-learning_rate     :  0.05
-n_estimators      :  200
-max_depth         :  5
-min_samples_leaf  :  2
-subsample         :  0.85
+╔══════════════╦═════════╦══════════╦══════════╗
+║ Split        ║   R²    ║   RMSE   ║   MAE    ║
+╠══════════════╬═════════╬══════════╬══════════╣
+║ Train        ║  0.971  ║ $14,442  ║  $9,713  ║
+║ Validation   ║  0.940  ║ $20,215  ║ $13,530  ║
+║ Test         ║  0.911  ║ $25,315  ║ $14,136  ║
+║ Cross-Val    ║  0.948  ║ $19,273  ║ $12,981  ║
+╚══════════════╩═════════╩══════════╩══════════╝
 ```
 
-### Actual vs Predicted (Test Set)
-
-```
-Predicted ($)
-   700k ┤                                         ●
-   600k ┤                                      ●
-   500k ┤                                   ●●
-   400k ┤                              ●●●●●
-   300k ┤                         ●●●●●●●●●●
-   200k ┤               ●●●●●●●●●●●●●●●●
-   150k ┤        ●●●●●●●●●●●●●●●
-   100k ┤   ●●●●●●●●●●●
-        └────────────────────────────────────────
-        100k 150k 200k 250k 300k 400k 500k 700k
-                     Actual ($)
-
-   — — — Perfect prediction line (y = x)
-   ●●● Model predictions
-
- → Most points hug the diagonal closely
- → Slight over-prediction for luxury homes (>$400k)
- → Prediction error narrows in the $100k–$250k range
-```
-
-### Final Model Metrics
-
-```
-╔═══════════════════════════════════════════════════╗
-║      FINAL MODEL PERFORMANCE SUMMARY              ║
-╠═══════════════╦══════════╦══════════╦═════════════╣
-║ Dataset       ║  R²      ║  RMSE    ║  MAE        ║
-╠═══════════════╬══════════╬══════════╬═════════════╣
-║ Test          ║  0.911   ║ $25,315  ║  $14,136    ║
-║ Validation    ║  0.940   ║ $20,215  ║  $13,530    ║
-║ Cross-Val     ║  0.948   ║ $19,273  ║  $12,981    ║
-╚═══════════════╩══════════╩══════════╩═════════════╝
-
- R²   = 94% of price variance explained by the model
- RMSE = On average, predictions are within ~$20k
- MAE  = The typical prediction error is ~$13.5k
-```
+> The model explains **94% of the variance** in home sale prices with a typical
+> prediction error of **±$13,530**.
 
 ### Feature Importance (Top 15)
 
-```
-Feature               Importance
-──────────────────────────────────────
-Overall Qual          ██████████████  0.142
-Gr Liv Area           █████████████   0.128
-Total Bsmt SF         ████████████    0.112
-Year Built            ██████████      0.098
-Garage Cars           █████████       0.091
-1st Flr SF            ████████        0.079
-TotalSF (engineered)  ███████         0.071
-Neighborhood_NridgHt  ██████          0.058
-Garage Area           █████           0.052
-Year Remod/Add        ████            0.041
-Full Bath             ████            0.038
-Lot Area              ███             0.031
-Kitchen Qual_Ex       ███             0.028
-Exter Qual_Ex         ██              0.019
-Foundation_PConc      ██              0.016
-──────────────────────────────────────
-→ Quality rating + size dominate predictions
-→ Neighbourhood, garage and age are next-tier drivers
-```
+| Rank | Feature | Importance | Type |
+|---|---|---|---|
+| 1 | Overall Qual | 14.2% | Raw |
+| 2 | Gr Liv Area | 12.8% | Raw |
+| 3 | Total Bsmt SF | 11.2% | Raw |
+| 4 | Year Built | 9.8% | Raw |
+| 5 | Garage Cars | 9.1% | Raw |
+| 6 | 1st Flr SF | 7.9% | Raw |
+| 7 | TotalSF | 7.1% | Engineered |
+| 8 | Neighborhood_NridgHt | 5.8% | Encoded |
+| 9 | Garage Area | 5.2% | Raw |
+| 10 | Year Remod/Add | 4.1% | Raw |
+| 11 | Full Bath | 3.8% | Raw |
+| 12 | Lot Area | 3.1% | Raw |
+| 13 | Kitchen Qual_Ex | 2.8% | Encoded |
+| 14 | Exter Qual_Ex | 1.9% | Encoded |
+| 15 | Foundation_PConc | 1.6% | Encoded |
+
+### Why the Other Models Underperformed
+
+**Decision Tree** — Fully grown trees memorise the training set (train R² = 1.0) but fail to
+generalise. This is the classic bias-variance tradeoff: low bias, very high variance.
+
+**AdaBoost** — Boosting with shallow trees is less effective than Gradient Boosting for
+tabular regression. It achieved 0.808 R², significantly below GB.
+
+**SVM** — The RBF kernel cannot handle the 200+ sparse one-hot features effectively.
+SVM requires heavy kernel tuning and does not scale well to high-dimensional tabular data.
 
 ---
 
-## 8. Production System Architecture
+## 8. System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    AMES HOUSING SYSTEM                       │
-├──────────────┬──────────────┬──────────────┬────────────────┤
-│  DATA LAYER  │  TRAIN LAYER │  SERVE LAYER │  OBS LAYER     │
-│              │              │              │                │
-│ AmesHousing  │  Optuna HPO  │  FastAPI     │  MLflow UI     │
-│   .csv       │  MLflow      │  /predict    │  Loguru logs   │
-│              │  Tracking    │  /health     │  SHAP plots    │
-│ Pandera      │  LightGBM    │  /metrics    │  Ruff lint     │
-│ Schema       │  XGBoost     │              │  pytest CI     │
-│ Validation   │  GBM         │  Pydantic    │  GitHub        │
-│              │              │  Validation  │  Actions       │
-└──────────────┴──────────────┴──────────────┴────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     AMES HOUSING SYSTEM                         │
+├─────────────────┬──────────────────┬─────────────┬─────────────┤
+│   DATA LAYER    │   TRAIN LAYER    │ SERVE LAYER │  OPS LAYER  │
+│                 │                  │             │             │
+│  AmesHousing   │  Optuna HPO      │  FastAPI    │  MLflow UI  │
+│   .csv          │  (Bayesian TPE)  │  /predict   │  Loguru     │
+│                 │                  │  /health    │  SHAP       │
+│  Pandera        │  MLflow          │  /metrics   │             │
+│  Schema         │  Tracking        │  /docs      │  Ruff lint  │
+│  Validation     │                  │             │  pytest     │
+│                 │  LightGBM        │  Pydantic   │  GitHub     │
+│  sklearn        │  XGBoost         │  Validation │  Actions    │
+│  Pipeline       │  GBM             │             │             │
+│                 │                  │  Docker     │  Docker     │
+└─────────────────┴──────────────────┴─────────────┴─────────────┘
+```
+
+### Request Flow
+
+```
+Client
+  │
+  │  POST /predict  { OverallQual, GrLivArea, YearBuilt, ... }
+  ▼
+FastAPI  →  Pydantic validation  →  to_dataframe()
+  │
+  ▼
+sklearn Pipeline
+  ├─ HighMissingDropper
+  ├─ AmesFeatureEngineer   (adds 13 features)
+  ├─ RareLabelEncoder
+  ├─ SkewnessCorrector
+  └─ ColumnTransformer → Gradient Boosting model
+  │
+  ▼
+log prediction  →  exp(x) − 1  →  add ±9% confidence interval
+  │
+  ▼
+{ predicted_price, lower_bound, upper_bound, prediction_id }
 ```
 
 ---
@@ -472,27 +471,28 @@ Foundation_PConc      ██              0.016
 ### Step 1 — Install dependencies
 
 ```bash
-# Install uv (fast Python package manager)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Create virtual environment and install all packages
-uv venv
+# Create virtual environment
+python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-uv pip install -e ".[dev]"
+
+# Install all packages
+pip install -e ".[dev]"
 ```
 
-### Step 2 — Place your data
+### Step 2 — Place the data
+
+Download `AmesHousing.csv` from [Kaggle](https://www.kaggle.com/datasets/prevek18/ames-housing-dataset/data)
+and place it in:
 
 ```bash
-# Copy the Ames Housing CSV into the raw data folder
-cp /path/to/AmesHousing.csv data/raw/
+data/raw/AmesHousing.csv
 ```
 
 ### Step 3 — Train the model
 
 ```bash
 make train
-# Runs Optuna HPO, logs to MLflow, saves best model to models/
+# Runs preprocessing → feature engineering → Optuna HPO → saves model to models/
 ```
 
 ### Step 4 — View experiment results
@@ -506,8 +506,8 @@ make mlflow
 
 ```bash
 make serve
-# API available at http://localhost:8000
-# Swagger docs at http://localhost:8000/docs
+# API: http://localhost:8000
+# Swagger docs: http://localhost:8000/docs
 ```
 
 ### Step 6 — Make a prediction
@@ -518,14 +518,29 @@ curl -X POST http://localhost:8000/predict \
   -d '{
     "OverallQual": 7,
     "GrLivArea": 1800,
+    "YearBuilt": 2005,
     "GarageCars": 2,
     "TotalBsmtSF": 900,
-    "YearBuilt": 2005,
     "Neighborhood": "CollgCr"
   }'
+```
 
-# Response:
-# { "predicted_price": 198450.00, "confidence_interval": [181200, 215700] }
+Response:
+```json
+{
+  "predicted_price": 198450.00,
+  "lower_bound": 181030.50,
+  "upper_bound": 215869.50,
+  "model_version": "0.1.0",
+  "prediction_id": "a3f2c1d9-..."
+}
+```
+
+### Step 7 — Run tests
+
+```bash
+pytest
+# 88 tests across data, features, models, and API layers
 ```
 
 ---
@@ -535,13 +550,24 @@ curl -X POST http://localhost:8000/predict \
 ### Endpoints
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET`  | `/health` | Service health check |
-| `GET`  | `/metrics` | Model performance metrics |
-| `POST` | `/predict` | Predict sale price for a property |
-| `GET`  | `/docs` | Swagger interactive documentation |
+|---|---|---|
+| `GET` | `/health` | Liveness check + model readiness |
+| `GET` | `/metrics` | Stored model performance metrics |
+| `POST` | `/predict` | Predict sale price for one property |
+| `POST` | `/predict/batch` | Predict for up to 100 properties |
+| `GET` | `/docs` | Swagger interactive documentation |
 
-### Example Request Body (`/predict`)
+### Required Fields (`POST /predict`)
+
+| Field | Type | Description |
+|---|---|---|
+| `OverallQual` | int (1–10) | Overall material and finish quality |
+| `GrLivArea` | float | Above-grade living area (sqft) |
+| `YearBuilt` | int | Original construction year |
+
+All other fields are optional with sensible defaults (e.g. `GarageCars=1`, `FullBath=1`).
+
+### Example Request
 
 ```json
 {
@@ -552,12 +578,10 @@ curl -X POST http://localhost:8000/predict \
   "GarageCars": 2,
   "GarageArea": 548,
   "YearBuilt": 2003,
-  "YearRemodAdd": 2003,
   "Neighborhood": "CollgCr",
   "ExterQual": "Gd",
   "KitchenQual": "Gd",
-  "FullBath": 2,
-  "HalfBath": 1
+  "FullBath": 2
 }
 ```
 
@@ -566,10 +590,11 @@ curl -X POST http://localhost:8000/predict \
 ```json
 {
   "predicted_price": 208500.00,
-  "lower_bound": 190200.00,
-  "upper_bound": 226800.00,
+  "lower_bound": 190215.00,
+  "upper_bound": 226785.00,
   "model_version": "0.1.0",
-  "features_used": 47
+  "prediction_id": "b7e3a2f1-4c8d-11ee-be56-0242ac120002",
+  "timestamp": "2026-03-16T17:00:00Z"
 }
 ```
 
@@ -577,21 +602,22 @@ curl -X POST http://localhost:8000/predict \
 
 ## 11. Tech Stack
 
-| Category | Technology | Why |
+| Category | Tool | Purpose |
 |---|---|---|
-| Package manager | `uv` | 10–100× faster than pip |
-| Config | `Pydantic v2` + YAML | Type-safe settings, env-var override |
-| Data validation | `Pandera` | DataFrame schema contracts |
-| ML core | `scikit-learn`, `LightGBM`, `XGBoost` | Industry standard + SOTA boosting |
-| HPO | `Optuna` | Bayesian optimisation, replaces GridSearchCV |
-| Experiment tracking | `MLflow` | Every run logged and reproducible |
-| Explainability | `SHAP` | Feature importance + waterfall plots |
-| API | `FastAPI` | Async, auto docs, production grade |
-| Logging | `Loguru` | Structured, rotating, compressed logs |
-| Linting | `Ruff` | Replaces black + flake8 + isort |
-| Testing | `pytest` | Unit + integration coverage |
-| CI/CD | `GitHub Actions` | Auto lint + test on every push |
-| Containers | `Docker` + `Docker Compose` | Reproducible deployment |
+| Language | Python 3.11 | Core language |
+| ML Core | scikit-learn, LightGBM, XGBoost | Model training and pipelines |
+| HPO | Optuna | Bayesian hyperparameter search (TPE) |
+| Experiment Tracking | MLflow | Log params, metrics, and artefacts |
+| Data Validation | Pandera | DataFrame schema contracts |
+| API | FastAPI | Async REST API with auto docs |
+| Serialisation | Pydantic v2 | Request/response validation |
+| Logging | Loguru | Structured, rotating logs |
+| Explainability | SHAP | Feature importance and waterfall plots |
+| Linting | Ruff | Replaces black + flake8 + isort |
+| Testing | pytest + pytest-cov | 88 unit and integration tests |
+| CI/CD | GitHub Actions | Lint and test on every push |
+| Containers | Docker + Docker Compose | Reproducible deployment |
+| Config | Pydantic Settings + YAML | Type-safe configuration |
 
 ---
 
@@ -601,69 +627,58 @@ curl -X POST http://localhost:8000/predict \
 ames-housing/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                  # Lint + test on push
+│       └── ci.yml                  # GitHub Actions: lint + test on push
 │
 ├── configs/
 │   └── config.yaml                 # All project settings
 │
 ├── data/
-│   ├── raw/                        # AmesHousing.csv goes here
-│   ├── interim/                    # Intermediate processing
-│   └── processed/                  # Train/val/test splits
+│   ├── raw/                        # AmesHousing.csv  (not in git)
+│   ├── interim/                    # Intermediate processing artefacts
+│   └── processed/                  # Train / val / test parquet splits
 │
-├── models/                         # Saved model artefacts
+├── models/                         # Saved model .pkl and metadata
 │
-├── notebooks/
-│   └── exploration.ipynb           # Original EDA notebook
+├── notebooks/                      # EDA and exploration notebooks
 │
 ├── src/
 │   └── ames_housing/
-│       ├── config.py               # Pydantic settings
+│       ├── config.py               # Pydantic settings model
 │       ├── data/
-│       │   ├── loader.py           # CSV loading + Pandera validation
-│       │   └── preprocessor.py     # Imputation, encoding, splitting
+│       │   ├── loader.py           # CSV loading + Pandera schema validation
+│       │   ├── preprocessor.py     # Imputation, encoding, splitting
+│       │   └── schema.py           # Pandera schema definitions
 │       ├── features/
-│       │   └── engineering.py      # Custom sklearn transformers
+│       │   ├── engineering.py      # build_pipeline() factory
+│       │   └── transformers.py     # Custom sklearn-compatible transformers
 │       ├── models/
 │       │   ├── trainer.py          # Optuna HPO + MLflow tracking
-│       │   └── evaluator.py        # Metrics + SHAP plots
+│       │   ├── evaluator.py        # Metrics computation + SHAP plots
+│       │   └── registry.py         # Save / load model artefacts
 │       ├── api/
-│       │   ├── main.py             # FastAPI app
-│       │   └── schemas.py          # Pydantic request/response models
+│       │   ├── main.py             # FastAPI app factory + lifespan
+│       │   ├── routes.py           # Endpoint handlers
+│       │   └── schemas.py          # Pydantic request / response models
 │       └── utils/
-│           ├── logging.py          # Loguru setup
+│           ├── logging.py          # Loguru configuration
 │           └── helpers.py          # Shared utilities
 │
 ├── tests/
-│   ├── test_data.py
-│   ├── test_features.py
-│   ├── test_models.py
-│   └── test_api.py
+│   ├── conftest.py                 # Shared fixtures and synthetic data
+│   ├── test_data.py                # Data pipeline tests
+│   ├── test_features.py            # Feature engineering tests
+│   ├── test_models.py              # Model registry and metrics tests
+│   └── test_api.py                 # FastAPI endpoint integration tests
 │
 ├── docker/
-│   ├── Dockerfile
-│   └── docker-compose.yml
+│   ├── Dockerfile                  # Multi-stage build (builder + runtime)
+│   └── docker-compose.yml          # API + MLflow services
 │
-├── pyproject.toml                  # Dependencies + tool config
-├── Makefile                        # Developer shortcuts
+├── pyproject.toml                  # Dependencies + tool configuration
+├── Makefile                        # Developer shortcuts (train, serve, test)
 └── README.md
 ```
 
 ---
 
-## Project Build Phases
-
-| Phase | Commit | Status |
-|-------|--------|--------|
-| 1 | `chore: project scaffold` | ✅ Done |
-| 2 | `feat: config & logging` | ✅ Done |
-| 3 | `feat: data pipeline` | ✅ Done |
-| 4 | `feat: feature engineering` | ✅ Done |
-| 5 | `feat: model training — MLflow + Optuna` | ✅ Done |
-| 6 | `feat: FastAPI serving` | ✅ Done |
-| 7 | `test: pytest suite` | ✅ Done |
-| 8 | `ci: GitHub Actions + Docker` | ✅ Done |
-
----
-
-*Built with modern Python ML engineering practices — Phase by Phase.*
+*Built end-to-end with modern Python ML engineering practices.*

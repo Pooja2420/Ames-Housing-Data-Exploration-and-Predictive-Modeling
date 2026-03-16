@@ -60,8 +60,10 @@ class PredictionRequest(BaseModel):
     WoodDeckSF: float         = Field(0.0,  ge=0,         description="Wood deck area (sqft)")
     OpenPorchSF: float        = Field(0.0,  ge=0,         description="Open porch area (sqft)")
     EnclosedPorch: float      = Field(0.0,  ge=0,         description="Enclosed porch area (sqft)")
+    ThreeSsnPorch: float      = Field(0.0,  ge=0,         description="Three season porch area (sqft)")
     ScreenPorch: float        = Field(0.0,  ge=0,         description="Screen porch area (sqft)")
     MasVnrArea: float         = Field(0.0,  ge=0,         description="Masonry veneer area (sqft)")
+    MiscVal: float            = Field(0.0,  ge=0,         description="Value of miscellaneous feature")
 
     # ── Categorical fields ─────────────────────────────────────────────────────
     MSZoning: str             = Field("RL",     description="Zoning classification")
@@ -122,7 +124,8 @@ class PredictionRequest(BaseModel):
             "YrSold": "Yr Sold",          "MoSold": "Mo Sold",
             "PoolArea": "Pool Area",      "WoodDeckSF": "Wood Deck SF",
             "OpenPorchSF": "Open Porch SF", "EnclosedPorch": "Enclosed Porch",
-            "ScreenPorch": "Screen Porch", "MasVnrArea": "Mas Vnr Area",
+            "ThreeSsnPorch": "3Ssn Porch",  "ScreenPorch": "Screen Porch",
+            "MasVnrArea": "Mas Vnr Area",   "MiscVal": "Misc Val",
             "MSZoning": "MS Zoning",      "Neighborhood": "Neighborhood",
             "BldgType": "Bldg Type",      "HouseStyle": "House Style",
             "ExterQual": "Exter Qual",    "ExterCond": "Exter Cond",

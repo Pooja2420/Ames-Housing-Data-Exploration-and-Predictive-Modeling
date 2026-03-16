@@ -30,7 +30,6 @@ from ames_housing.api.routes import router
 from ames_housing.config import settings
 from ames_housing.utils.logging import setup_logging
 
-
 # ── Lifespan: startup & shutdown ───────────────────────────────────────────────
 
 @asynccontextmanager

@@ -20,7 +20,6 @@ Usage
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import numpy as np
@@ -32,7 +31,6 @@ from ames_housing.config import settings
 from ames_housing.data.loader import load_raw
 from ames_housing.data.schema import PROCESSED_SCHEMA
 from ames_housing.utils.helpers import save_json
-
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 _ID_COLS = ["PID", "Order"]

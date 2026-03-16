@@ -9,8 +9,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+import pandas as pd
 from pydantic import BaseModel, Field, field_validator, model_validator
-
 
 # ── Request ────────────────────────────────────────────────────────────────────
 
@@ -87,7 +87,7 @@ class PredictionRequest(BaseModel):
     model_config = {"populate_by_name": True}
 
     @model_validator(mode="after")
-    def _set_defaults(self) -> "PredictionRequest":
+    def _set_defaults(self) -> PredictionRequest:
         """Fill derived defaults after all fields are set."""
         if self.YearRemodAdd is None:
             self.YearRemodAdd = self.YearBuilt
@@ -103,13 +103,9 @@ class PredictionRequest(BaseModel):
             raise ValueError(f"Must be one of {valid}, got {v!r}")
         return v
 
-    def to_dataframe(self) -> "pd.DataFrame":
+    def to_dataframe(self) -> pd.DataFrame:
         """Convert to a single-row DataFrame matching training column names."""
-        import pandas as pd
-
         row = self.model_dump(by_alias=True)
-        # Rename fields that use Python-safe aliases back to original names
-        renames = {"1stFlrSF": "1st Flr SF", "2ndFlrSF": "2nd Flr SF"}
         ames_row = {}
         col_map = {
             "OverallQual": "Overall Qual", "OverallCond": "Overall Cond",

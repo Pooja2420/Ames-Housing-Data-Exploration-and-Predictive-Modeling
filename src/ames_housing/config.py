@@ -91,7 +91,7 @@ class Settings(BaseSettings):
     logging: LoggingConfig = LoggingConfig()
 
     @classmethod
-    def from_yaml(cls, path: Path = CONFIG_FILE) -> "Settings":
+    def from_yaml(cls, path: Path = CONFIG_FILE) -> Settings:
         """Load settings from YAML, then allow env-var overrides."""
         raw: dict[str, Any] = {}
         if path.exists():

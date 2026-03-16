@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import joblib
 import numpy as np
 import pandas as pd
 import pytest
 from sklearn.pipeline import Pipeline
-
 
 # ── Metrics ────────────────────────────────────────────────────────────────────
 
@@ -195,8 +193,10 @@ class TestPredictionSanity:
     ):
         """Higher OverallQual should generally predict higher prices."""
         X = raw_df.drop(columns=["SalePrice"]).copy()
-        X_low  = X.copy(); X_low["Overall Qual"]  = 2
-        X_high = X.copy(); X_high["Overall Qual"] = 9
+        X_low = X.copy()
+        X_low["Overall Qual"] = 2
+        X_high = X.copy()
+        X_high["Overall Qual"] = 9
         pred_low  = np.expm1(fitted_full_pipeline.predict(X_low)).mean()
         pred_high = np.expm1(fitted_full_pipeline.predict(X_high)).mean()
         assert pred_high > pred_low, "Higher quality should predict higher price"
@@ -206,8 +206,10 @@ class TestPredictionSanity:
     ):
         """Larger GrLivArea should generally predict higher prices."""
         X = raw_df.drop(columns=["SalePrice"]).copy()
-        X_small = X.copy(); X_small["Gr Liv Area"] = 800.0
-        X_large = X.copy(); X_large["Gr Liv Area"] = 3500.0
+        X_small = X.copy()
+        X_small["Gr Liv Area"] = 800.0
+        X_large = X.copy()
+        X_large["Gr Liv Area"] = 3500.0
         pred_small = np.expm1(fitted_full_pipeline.predict(X_small)).mean()
         pred_large = np.expm1(fitted_full_pipeline.predict(X_large)).mean()
         assert pred_large > pred_small, "Larger area should predict higher price"

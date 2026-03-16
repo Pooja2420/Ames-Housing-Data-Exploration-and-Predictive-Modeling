@@ -11,8 +11,6 @@ import pandera as pa
 import pytest
 
 from ames_housing.data.schema import PROCESSED_SCHEMA, RAW_SCHEMA
-from tests.conftest import make_synthetic_df
-
 
 # ── Schema validation ──────────────────────────────────────────────────────────
 

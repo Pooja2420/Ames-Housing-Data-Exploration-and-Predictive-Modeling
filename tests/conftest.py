@@ -7,9 +7,7 @@ built once per session, while mutable state is fresh per test.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
@@ -19,7 +17,6 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.pipeline import Pipeline
 
 from ames_housing.features.engineering import build_pipeline
-
 
 # ── Synthetic dataset ──────────────────────────────────────────────────────────
 

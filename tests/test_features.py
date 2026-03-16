@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.pipeline import Pipeline
-from sklearn.utils.estimator_checks import parametrize_with_checks
 
 from ames_housing.features.transformers import (
     AmesFeatureEngineer,
@@ -15,7 +14,6 @@ from ames_housing.features.transformers import (
     SkewnessCorrector,
 )
 from tests.conftest import make_synthetic_df
-
 
 # ── AmesFeatureEngineer ────────────────────────────────────────────────────────
 

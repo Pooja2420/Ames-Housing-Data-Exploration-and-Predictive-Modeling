@@ -20,7 +20,6 @@ from ames_housing.config import settings
 from ames_housing.data.schema import RAW_SCHEMA
 from ames_housing.utils.helpers import memory_usage_mb, reduce_memory
 
-
 # ── Column name mapping ────────────────────────────────────────────────────────
 # The OpenML version uses underscores and slightly different names vs the
 # original Kaggle/DePaul CSV that uses spaces. This map normalises both

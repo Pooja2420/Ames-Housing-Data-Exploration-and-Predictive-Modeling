@@ -19,7 +19,6 @@ import pandas as pd
 from loguru import logger
 from sklearn.base import BaseEstimator, TransformerMixin
 
-
 # ── 1. Domain feature engineering ─────────────────────────────────────────────
 
 class AmesFeatureEngineer(BaseEstimator, TransformerMixin):
@@ -62,7 +61,7 @@ class AmesFeatureEngineer(BaseEstimator, TransformerMixin):
         "PricePerSF":   ["Lot Area", "Gr Liv Area"],
     }
 
-    def fit(self, X: pd.DataFrame, y=None) -> "AmesFeatureEngineer":
+    def fit(self, X: pd.DataFrame, y=None) -> AmesFeatureEngineer:
         """No fitting required — all features are deterministic transforms."""
         return self
 
@@ -137,7 +136,7 @@ class HighMissingDropper(BaseEstimator, TransformerMixin):
         self.threshold = threshold
         self.cols_to_drop_: list[str] = []
 
-    def fit(self, X: pd.DataFrame, y=None) -> "HighMissingDropper":
+    def fit(self, X: pd.DataFrame, y=None) -> HighMissingDropper:
         missing_frac = X.isnull().mean()
         self.cols_to_drop_ = missing_frac[missing_frac > self.threshold].index.tolist()
         logger.info(
@@ -177,7 +176,7 @@ class SkewnessCorrector(BaseEstimator, TransformerMixin):
         self.exclude = exclude
         self.skewed_cols_: list[str] = []
 
-    def fit(self, X: pd.DataFrame, y=None) -> "SkewnessCorrector":
+    def fit(self, X: pd.DataFrame, y=None) -> SkewnessCorrector:
         _exclude = self.exclude or []   # resolve None safely here, not in __init__
         num_cols = (
             X.select_dtypes(include=[np.number])
@@ -223,7 +222,7 @@ class RareLabelEncoder(BaseEstimator, TransformerMixin):
         self.fill_value = fill_value
         self.frequent_labels_: dict[str, list] = {}
 
-    def fit(self, X: pd.DataFrame, y=None) -> "RareLabelEncoder":
+    def fit(self, X: pd.DataFrame, y=None) -> RareLabelEncoder:
         cat_cols = X.select_dtypes(include=["object", "category"]).columns
         for col in cat_cols:
             freq = X[col].value_counts(normalize=True)

@@ -169,10 +169,10 @@ def api_client(fitted_full_pipeline) -> TestClient:
     from ames_housing.api.main import create_app
 
     app = create_app()
-    app.state.pipeline = fitted_full_pipeline
 
-    # Bypass lifespan so we don't try to load from disk
     with TestClient(app, raise_server_exceptions=True) as client:
+        # Inject AFTER lifespan runs, so it overrides any model loaded from disk
+        client.app.state.pipeline = fitted_full_pipeline
         yield client
 
 
